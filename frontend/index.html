@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PhotoShare</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef1f5;--card:#fff;--ink:#16202b;--mut:#5d6b79;--line:#d8dfe6;--cobalt:#2b55e0;--on:#fff;--heart:#e03556;--ok:#1f8a5b;--r1:#2b55e0;--r2:#c2410c;--soft:#e4e9f5}
+@media(prefers-color-scheme:dark){:root{--bg:#10161d;--card:#19222b;--ink:#e8edf1;--mut:#93a1ad;--line:#2b3641;--cobalt:#7894ff;--on:#0d1420;--heart:#ff6b86;--ok:#4fd09a;--r1:#7894ff;--r2:#ff9a62;--soft:#222d3d}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Bricolage Grotesque",system-ui,sans-serif;line-height:1.45}
+button,input{font:inherit;color:inherit}button{cursor:pointer}
+:focus-visible{outline:3px solid var(--cobalt);outline-offset:2px}
+[hidden]{display:none!important}
+header{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--card) 92%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;padding:10px clamp(14px,4vw,36px)}
+.brand{font-size:1.45rem;font-weight:800;letter-spacing:-.035em;margin-right:auto}
+.pill{display:flex;align-items:center;gap:7px;padding:5px 11px;border:2px solid var(--line);border-radius:999px;font-size:.82rem;font-weight:600}
+.pill i{width:9px;height:9px;border-radius:50%;background:var(--mut)}
+#replica[data-r="photos-1"]{border-color:var(--r1)}#replica[data-r="photos-1"] i{background:var(--r1)}
+#replica[data-r="photos-2"]{border-color:var(--r2)}#replica[data-r="photos-2"] i{background:var(--r2)}
+#live.on i{background:var(--ok)}
+.avatar{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;flex:none}
+.me{display:flex;align-items:center;gap:8px;font-weight:600}
+.btn{padding:10px 18px;border-radius:10px;border:1px solid var(--line);background:var(--card);font-weight:600}
+.btn.p{background:var(--cobalt);color:var(--on);border-color:var(--cobalt)}
+.btn.d{background:var(--heart);color:#fff;border-color:var(--heart)}
+.btn.g{border:0;background:none;color:var(--mut)}
+.btn:disabled{opacity:.55;cursor:wait}
+main{max-width:1100px;margin:0 auto;padding:26px clamp(14px,4vw,36px) 80px}
+.card,.box{background:var(--card);border:1px solid var(--line);border-radius:16px}
+.box{padding:22px;margin-bottom:28px}
+.auth{display:grid;grid-template-columns:1.1fr 1fr;gap:28px;align-items:center}
+.auth h1{font-size:clamp(1.9rem,4.6vw,3rem);line-height:1.05;letter-spacing:-.035em;margin:0 0 10px}
+.auth p{color:var(--mut);margin:0;max-width:40ch}
+.tabs{display:flex;background:var(--bg);border-radius:10px;padding:4px;margin-bottom:14px}
+.tabs button{flex:1;border:0;background:none;padding:8px;border-radius:8px;font-weight:600;color:var(--mut)}
+.tabs button[aria-selected=true]{background:var(--card);color:var(--ink);box-shadow:0 1px 3px #0002}
+label.f{display:block;font-size:.85rem;font-weight:600;margin:10px 0 4px}
+input[type=text],input[type=password]{width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg)}
+.err{color:var(--heart);font-weight:600;min-height:1.3em;margin:8px 0 0;font-size:.9rem}
+.drop{display:grid;place-items:center;text-align:center;gap:4px;min-height:140px;border:2px dashed var(--line);border-radius:12px;padding:16px;cursor:pointer;color:var(--mut);overflow:hidden}
+.drop.over{border-color:var(--cobalt);background:var(--soft)}
+.drop img{max-height:220px;max-width:100%;border-radius:8px}
+.comp{display:grid;grid-template-columns:1fr 1.2fr;gap:18px}
+.row{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:12px}
+.count{font-size:.8rem;color:var(--mut)}
+#feed{columns:3 290px;column-gap:20px}
+.post{break-inside:avoid;margin:0 0 20px;overflow:hidden}
+.post.gone{opacity:0;transform:scale(.96);transition:.3s}
+.ph{display:flex;align-items:center;gap:10px;padding:12px 14px}
+.ph .avatar{width:32px;height:32px;font-size:.9rem}
+.ph b{display:block;line-height:1.1}.ph small{color:var(--mut)}
+.ph .del{margin-left:auto;border:0;background:none;color:var(--mut);padding:6px 8px;border-radius:8px}
+.ph .del:hover{color:var(--heart);background:var(--soft)}
+.img{position:relative;background:var(--line);min-height:120px}
+.img img{display:block;width:100%;height:auto}
+.pop{position:absolute;inset:0;display:grid;place-items:center;font-size:4.5rem;color:#fff;pointer-events:none;opacity:0;text-shadow:0 2px 12px #0006}
+.pop.go{animation:pop .7s ease-out}
+@keyframes pop{0%{opacity:0;transform:scale(.4)}30%{opacity:1;transform:scale(1.15)}100%{opacity:0;transform:scale(1)}}
+.pb{padding:12px 14px 14px}.pb p{margin:0 0 10px;overflow-wrap:anywhere}
+.acts{display:flex;gap:8px}
+.chip{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:6px 13px;font-weight:600;font-size:.9rem}
+.chip.on{color:var(--heart);border-color:var(--heart);background:var(--card)}
+.chip.on .h{display:inline-block;animation:beat .35s}
+@keyframes beat{50%{transform:scale(1.5)}}
+.cms{margin-top:12px;border-top:1px solid var(--line);padding-top:10px;font-size:.92rem}
+.cms p{margin:0 0 6px;overflow-wrap:anywhere}.cms b{margin-right:6px}.cms .row{margin-top:8px}
+.hint{color:var(--mut);font-size:.88rem}
+.skel{height:260px;margin:0 0 20px;break-inside:avoid;background:linear-gradient(100deg,var(--card) 30%,var(--soft) 50%,var(--card) 70%);background-size:300% 100%;animation:sh 1.3s infinite}
+@keyframes sh{to{background-position:-100% 0}}
+.empty{text-align:center;padding:50px 10px;color:var(--mut)}
+.empty b{display:block;color:var(--ink);font-size:1.2rem;margin-bottom:4px}
+dialog{border:1px solid var(--line);border-radius:16px;background:var(--card);color:var(--ink);padding:22px;max-width:360px}
+dialog::backdrop{background:#0008}dialog h3{margin:0 0 6px}dialog p{margin:0 0 16px;color:var(--mut)}
+dialog .row{justify-content:flex-end;margin:0}
+#toasts{position:fixed;right:14px;bottom:14px;display:grid;gap:8px;z-index:20}
+.toast{background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:12px;font-size:.92rem;max-width:300px;animation:in .25s}
+@keyframes in{from{opacity:0;transform:translateY(8px)}}
+@media(max-width:760px){.auth,.comp{grid-template-columns:1fr}#live span,#replica span{display:none}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">PhotoShare</div>
+  <div class="pill" id="replica" title="Réplica del servicio de fotos que respondió"><i></i><span id="served">Conectando…</span></div>
+  <div class="pill" id="live" title="Avisos en tiempo real (WebSocket)"><i></i><span>Tiempo real</span></div>
+  <div class="me" id="meBox" hidden><div class="avatar" id="meAv"></div><span id="meName"></span><button class="btn g" id="logout">Salir</button></div>
+</header>
+<main>
+  <section class="box auth" id="authBox">
+    <div><h1>Comparte tus fotos con todos.</h1><p>Crea una cuenta en segundos, sube una imagen y mira cómo aparece en vivo en los demás navegadores.</p></div>
+    <div>
+      <div class="tabs" role="tablist"><button role="tab" id="tLogin" aria-selected="true">Entrar</button><button role="tab" id="tReg" aria-selected="false">Crear cuenta</button></div>
+      <label class="f" for="u">Usuario</label><input type="text" id="u" autocomplete="username" placeholder="ana_92">
+      <label class="f" for="p">Contraseña</label><input type="password" id="p" autocomplete="current-password" placeholder="Mínimo 4 caracteres">
+      <p class="err" id="authErr" role="alert"></p>
+      <button class="btn p" id="authBtn" style="width:100%">Entrar</button>
+    </div>
+  </section>
+
+  <section class="box comp" id="comp" hidden>
+    <label class="drop" id="drop" for="file"><span id="dropTxt"><b>Arrastra una foto aquí</b><br>o haz clic para elegirla (JPG, PNG, GIF, WEBP · máx. 5 MB)</span></label>
+    <input type="file" id="file" accept="image/jpeg,image/png,image/gif,image/webp" hidden>
+    <div>
+      <label class="f" for="cap" style="margin-top:0">Descripción</label>
+      <input type="text" id="cap" maxlength="200" placeholder="¿Qué estaba pasando?">
+      <div class="row"><span class="count" id="cnt">0/200</span><button class="btn p" id="up" disabled>Publicar foto</button></div>
+      <p class="err" id="upErr" role="alert"></p>
+    </div>
+  </section>
+
+  <section id="feed" aria-live="polite"></section>
+  <div class="empty" id="empty" hidden><b>Aún no hay fotos</b>Sé la primera persona en publicar.</div>
+</main>
+<dialog id="dlg"><h3>¿Eliminar esta foto?</h3><p>Se borrarán también sus likes y comentarios. No se puede deshacer.</p>
+  <div class="row"><button class="btn" id="no">Cancelar</button><button class="btn d" id="yes">Eliminar</button></div></dialog>
+<div id="toasts"></div>
+
+<script>
+const $=s=>document.querySelector(s);
+let token=localStorage.getItem("token"),me=localStorage.getItem("username"),mode="login",liked=new Set(),file=null;
+const openCms=new Set();
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const color=n=>{let h=0;for(const c of n)h=(h*31+c.charCodeAt(0))%360;return`hsl(${h} 50% 42%)`};
+const av=(n,cls="")=>`<div class="avatar ${cls}" style="background:${color(n)}">${esc(n[0].toUpperCase())}</div>`;
+function ago(s){const t=(Date.now()-new Date(s.replace(" ","T")+"Z"))/1000;
+  if(t<60)return"ahora";if(t<3600)return`hace ${Math.floor(t/60)} min`;
+  if(t<86400)return`hace ${Math.floor(t/3600)} h`;return`hace ${Math.floor(t/86400)} d`}
+function toast(m){const t=document.createElement("div");t.className="toast";t.textContent=m;$("#toasts").appendChild(t);setTimeout(()=>t.remove(),4000)}
+async function api(path,o={}){o.headers={...(o.headers||{})};if(token)o.headers.Authorization="Bearer "+token;
+  const r=await fetch("/api"+path,o),d=await r.json().catch(()=>({}));
+  if(!r.ok){if(r.status===401&&token)logout(true);const m=d.detail;throw new Error(typeof m==="string"?m:"Revisa los datos: usuario de 3-30 letras, números o _, y contraseña de 4+ caracteres")}
+  return d}
+const pj=(p,b)=>api(p,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b)});
+
+/* sesión */
+function session(){const on=!!token;$("#authBox").hidden=on;$("#comp").hidden=!on;$("#meBox").hidden=!on;
+  if(on){$("#meName").textContent="@"+me;$("#meAv").style.background=color(me);$("#meAv").textContent=me[0].toUpperCase()}}
+function logout(expired){token=me=null;liked=new Set();localStorage.clear();session();loadFeed();if(expired===true)toast("Tu sesión venció. Inicia sesión de nuevo.")}
+function setMode(m){mode=m;$("#tLogin").setAttribute("aria-selected",m==="login");$("#tReg").setAttribute("aria-selected",m==="register");
+  $("#authBtn").textContent=m==="login"?"Entrar":"Crear cuenta";$("#authErr").textContent="";
+  $("#p").autocomplete=m==="login"?"current-password":"new-password"}
+async function auth(){const b=$("#authBtn");b.disabled=true;$("#authErr").textContent="";
+  try{const r=await pj("/auth/"+mode,{username:$("#u").value.trim(),password:$("#p").value});
+    token=r.token;me=r.username;localStorage.setItem("token",token);localStorage.setItem("username",me);$("#p").value="";
+    session();loadFeed();toast("¡Bienvenido, @"+me+"!")}
+  catch(e){$("#authErr").textContent=e.message}finally{b.disabled=false}}
+$("#tLogin").onclick=()=>setMode("login");$("#tReg").onclick=()=>setMode("register");
+$("#authBtn").onclick=auth;$("#p").onkeydown=$("#u").onkeydown=e=>{if(e.key==="Enter")auth()};$("#logout").onclick=()=>logout();
+
+/* subir */
+function pick(f){if(!f)return;
+  if(!/^image\/(jpeg|png|gif|webp)$/.test(f.type)){$("#upErr").textContent="Elige una imagen JPG, PNG, GIF o WEBP.";return}
+  if(f.size>5*1024*1024){$("#upErr").textContent="La imagen supera los 5 MB.";return}
+  $("#upErr").textContent="";file=f;$("#drop").innerHTML=`<img src="${URL.createObjectURL(f)}" alt="Vista previa">`;$("#up").disabled=false}
+$("#file").onchange=e=>pick(e.target.files[0]);
+const dz=$("#drop");["dragenter","dragover"].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add("over")}));
+["dragleave","drop"].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove("over")}));
+dz.addEventListener("drop",e=>pick(e.dataTransfer.files[0]));
+$("#cap").oninput=e=>$("#cnt").textContent=e.target.value.length+"/200";
+$("#up").onclick=async()=>{const b=$("#up");b.disabled=true;b.textContent="Publicando…";
+  const fd=new FormData();fd.append("file",file);fd.append("caption",$("#cap").value);
+  try{await api("/photos",{method:"POST",body:fd});file=null;$("#cap").value="";$("#cnt").textContent="0/200";$("#file").value="";
+    $("#drop").innerHTML='<span><b>Arrastra una foto aquí</b><br>o haz clic para elegirla (JPG, PNG, GIF, WEBP · máx. 5 MB)</span>';
+    toast("Foto publicada");await loadFeed()}
+  catch(e){$("#upErr").textContent=e.message;b.disabled=false}finally{b.textContent="Publicar foto"}};
+
+/* feed */
+let first=true;
+async function loadFeed(){
+  if(first){$("#feed").innerHTML='<div class="skel card"></div>'.repeat(3)}
+  try{const f=await api("/photos/feed");
+    if(token)try{liked=new Set((await api("/social/liked")).photo_ids)}catch{}
+    const r=$("#replica");r.dataset.r=f.served_by;$("#served").textContent=f.served_by+(f.cached?" · caché":" · BD");
+    const box=$("#feed");box.innerHTML="";$("#empty").hidden=f.photos.length>0;
+    f.photos.forEach(p=>{box.appendChild(post(p));if(openCms.has(p.id))cms(p.id)});first=false}
+  catch{$("#served").textContent="Sin respuesta";$("#replica").dataset.r="";if(first)$("#feed").innerHTML=""}}
+
+function post(p){const el=document.createElement("article");el.className="card post";el.dataset.id=p.id;
+  const mine=p.username===me,on=liked.has(p.id);
+  el.innerHTML=`<div class="ph">${av(p.username)}<div><b>@${esc(p.username)}</b><small>${ago(p.created_at)}</small></div>
+    ${mine?'<button class="del" title="Eliminar foto" aria-label="Eliminar foto">🗑</button>':""}</div>
+    <div class="img"><img src="/uploads/${esc(p.filename)}" alt="Foto de @${esc(p.username)}" loading="lazy"><div class="pop">♥</div></div>
+    <div class="pb">${p.caption?`<p>${esc(p.caption)}</p>`:""}
+    <div class="acts"><button class="chip like ${on?"on":""}" aria-pressed="${on}"><span class="h">♥</span> <span class="n">${p.likes}</span></button>
+    <button class="chip cm">💬 ${p.comments}</button></div><div class="cms" hidden></div></div>`;
+  el.querySelector(".like").onclick=()=>like(p.id);
+  el.querySelector(".img").ondblclick=()=>{like(p.id,true);const h=el.querySelector(".pop");h.classList.remove("go");void h.offsetWidth;h.classList.add("go")};
+  el.querySelector(".cm").onclick=()=>{if(openCms.has(p.id)){openCms.delete(p.id);el.querySelector(".cms").hidden=true}else{openCms.add(p.id);cms(p.id)}};
+  const d=el.querySelector(".del");if(d)d.onclick=()=>confirmDel(p.id);
+  return el}
+
+async function like(id,onlyAdd){
+  if(!token){toast("Inicia sesión para dar me gusta");return}
+  if(onlyAdd&&liked.has(id))return;
+  const el=document.querySelector(`.post[data-id="${id}"]`),b=el.querySelector(".like"),n=b.querySelector(".n"),was=liked.has(id);
+  was?liked.delete(id):liked.add(id);b.classList.toggle("on",!was);n.textContent=+n.textContent+(was?-1:1);   // respuesta inmediata
+  try{const r=await api(`/social/photos/${id}/like`,{method:"POST"});n.textContent=r.likes;b.classList.toggle("on",r.liked);r.liked?liked.add(id):liked.delete(id)}
+  catch(e){was?liked.add(id):liked.delete(id);b.classList.toggle("on",was);n.textContent=+n.textContent+(was?1:-1);toast(e.message)}}
+
+async function cms(id){const box=document.querySelector(`.post[data-id="${id}"] .cms`);if(!box)return;box.hidden=false;
+  try{const{comments}=await api(`/social/photos/${id}/comments`);
+    box.innerHTML=comments.map(c=>`<p><b>@${esc(c.username)}</b>${esc(c.text)}</p>`).join("")||'<p class="hint">Aún no hay comentarios.</p>';
+    if(!token){box.insertAdjacentHTML("beforeend",'<p class="hint">Inicia sesión para comentar.</p>');return}
+    const row=document.createElement("div");row.className="row";
+    row.innerHTML='<input type="text" maxlength="300" placeholder="Escribe un comentario" aria-label="Comentario"><button class="btn p">Enviar</button>';
+    const i=row.querySelector("input"),send=async()=>{if(!i.value.trim())return;
+      try{await pj(`/social/photos/${id}/comments`,{text:i.value});loadFeed()}catch(e){toast(e.message)}};
+    row.querySelector("button").onclick=send;i.onkeydown=e=>{if(e.key==="Enter")send()};box.appendChild(row)}
+  catch(e){box.textContent=e.message}}
+
+/* eliminar */
+let delId=null;const dlg=$("#dlg");
+function confirmDel(id){delId=id;dlg.showModal()}
+$("#no").onclick=()=>dlg.close();
+$("#yes").onclick=async()=>{const id=delId;dlg.close();
+  try{await api("/photos/"+id,{method:"DELETE"});openCms.delete(id);
+    const el=document.querySelector(`.post[data-id="${id}"]`);if(el){el.classList.add("gone");setTimeout(loadFeed,300)}toast("Foto eliminada")}
+  catch(e){toast(e.message)}};
+
+/* WebSocket */
+let rt;function ws(){const s=new WebSocket((location.protocol==="https:"?"wss://":"ws://")+location.host+"/ws"),l=$("#live");
+  s.onopen=()=>l.classList.add("on");s.onclose=()=>{l.classList.remove("on");setTimeout(ws,2000)};
+  s.onmessage=ev=>{const e=JSON.parse(ev.data);if(e.user===me)return;
+    const t={photo:`@${e.user} subió una foto`,like:e.liked&&`A @${e.user} le gustó una foto`,comment:`@${e.user} comentó una foto`}[e.type];
+    if(t)toast(t);clearTimeout(rt);rt=setTimeout(loadFeed,300)}}
+session();loadFeed();ws();setInterval(()=>{if(!document.hidden)document.querySelectorAll(".ph small").length&&0},60000);
+</script>
+</body>
+</html>

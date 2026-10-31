@@ -1,0 +1,92 @@
+# PhotoShare - sistema distribuido para compartir fotos
+x-photos: &photos
+  build:
+    context: .
+    dockerfile: photos/Dockerfile
+  environment:
+    DB_URL: postgresql://app:app@db:5432/photoshare
+    REDIS_URL: redis://redis:6379
+    JWT_SECRET: cambia-este-secreto
+  volumes:
+    - uploads:/data/uploads
+  depends_on:
+    db: { condition: service_healthy }
+    redis: { condition: service_started }
+  restart: unless-stopped
+
+services:
+  nginx:
+    image: nginx:alpine
+    ports: ["8080:80"]
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./frontend:/usr/share/nginx/html:ro
+      - uploads:/data/uploads:ro
+    depends_on: [auth, photos1, photos2, social, notifications]
+
+  auth:
+    build: { context: ., dockerfile: auth/Dockerfile }
+    environment:
+      DB_URL: postgresql://app:app@db:5432/photoshare
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: cambia-este-secreto
+    depends_on:
+      db: { condition: service_healthy }
+      redis: { condition: service_started }
+    restart: unless-stopped
+
+  photos1:
+    <<: *photos
+    environment:
+      DB_URL: postgresql://app:app@db:5432/photoshare
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: cambia-este-secreto
+      REPLICA_NAME: photos-1
+
+  photos2:
+    <<: *photos
+    environment:
+      DB_URL: postgresql://app:app@db:5432/photoshare
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: cambia-este-secreto
+      REPLICA_NAME: photos-2
+
+  social:
+    build: { context: ., dockerfile: social/Dockerfile }
+    environment:
+      DB_URL: postgresql://app:app@db:5432/photoshare
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: cambia-este-secreto
+    depends_on:
+      db: { condition: service_healthy }
+      redis: { condition: service_started }
+    restart: unless-stopped
+
+  notifications:
+    build: { context: ., dockerfile: notifications/Dockerfile }
+    environment:
+      REDIS_URL: redis://redis:6379
+    depends_on: [redis]
+    restart: unless-stopped
+
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: photoshare
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d photoshare"]
+      interval: 3s
+      timeout: 3s
+      retries: 15
+
+  redis:
+    image: redis:7-alpine
+
+volumes:
+  pgdata:
+  uploads:
