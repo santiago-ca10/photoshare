@@ -1,8 +1,16 @@
 # PhotoShare
 
+
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=REEMPLAZAR_ID" target="_blank" rel="noopener noreferrer">
+    <img src="https://img.shields.io/badge/VER%20DEMO-FF0000?style=for-the-badge&logo=youtube&logoColor=white" alt="Ver video demo en YouTube">
+  </a>
+</p>
+
+
 Sistema distribuido para compartir fotos, construido como **microservicios** y orquestado con **Docker Compose**. Demuestra balanceo de carga, tolerancia a fallos, caché, mensajería Pub/Sub, concurrencia y comunicación en tiempo real.
 
-![Arquitectura](docs/images/arquitectura.svg)
+![Arquitectura](docs/images/arquitectura.png)
 
 ## Características
 - Registro e inicio de sesión (JWT).
