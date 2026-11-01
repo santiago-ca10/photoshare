@@ -1,6 +1,6 @@
 """Servicio social: likes y comentarios."""
 from fastapi import Depends, FastAPI, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from common.db import cursor
 from common.events import invalidate_feed, publish
@@ -11,6 +11,14 @@ app = FastAPI(title="PhotoShare - Social")
 
 class CommentIn(BaseModel):
     text: str = Field(min_length=1, max_length=300)
+
+    @field_validator("text")
+    @classmethod
+    def strip_text(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("El comentario no puede estar vacío")
+        return value
 
 
 def _photo_exists(cur, photo_id: int):
@@ -50,6 +58,7 @@ def my_likes(user: dict = Depends(current_user)):
 @app.get("/api/social/photos/{photo_id}/comments")
 def list_comments(photo_id: int):
     with cursor() as cur:
+        _photo_exists(cur, photo_id)
         cur.execute(
             """SELECT c.id, c.text, u.username, c.created_at::text AS created_at
                FROM comments c JOIN users u ON u.id = c.user_id
